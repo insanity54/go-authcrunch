@@ -130,6 +130,39 @@ func TestValidateConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "validate patreon oauth config",
+			config: &Config{
+				Name:         "patreon",
+				Realm:        "patreon",
+				Driver:       "patreon",
+				ClientID:     "foo",
+				ClientSecret: "bar",
+			},
+			want: &Config{
+				Name:         "patreon",
+				Realm:        "patreon",
+				Driver:       "patreon",
+				ClientID:     "foo",
+				ClientSecret: "bar",
+				// After the validation.
+				ServerName:          "patreon.com",
+				IdentityTokenName:   "access_token",
+				Scopes:              []string{"identity", "identity.memberships"},
+				BaseAuthURL:         "https://www.patreon.com/oauth2",
+				ResponseType:        []string{"code"},
+				RequiredTokenFields: []string{"access_token"},
+				AuthorizationURL:    "https://www.patreon.com/oauth2/authorize",
+				TokenURL:            "https://www.patreon.com/api/oauth2/token",
+				LoginIcon: &icons.LoginIcon{
+					ClassName:       "lab la-patreon la-2x",
+					Color:           "white",
+					Text: 					 "Patreon",
+					BackgroundColor: "#ff424d",
+					TextColor:       "#141518",
+				},
+			},
+		},
+		{
 			name: "validate nextcloud oauth config",
 			config: &Config{
 				Name:         "nextcloud",

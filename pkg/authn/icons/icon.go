@@ -71,6 +71,8 @@ func (icon *LoginIcon) Configure(s string) {
 			icon.ClassName = "lab la-gitlab la-2x"
 		case "discord":
 			icon.ClassName = "lab la-discord la-2x"
+		case "patreon":
+			icon.ClassName = "lab la-patreon la-2x"
 		case "windows":
 			icon.ClassName = "lab la-windows la-2x"
 		case "azure":
@@ -126,6 +128,8 @@ func (icon *LoginIcon) Configure(s string) {
 			icon.BackgroundColor = "#24292f"
 		case "discord":
 			icon.BackgroundColor = "#5865f2"
+		case "patreon":
+			icon.BackgroundColor = "#ff424d"
 		case "windows":
 			// MaterializeCSS "orange darken-1"
 			icon.BackgroundColor = "#fb8c00"
@@ -156,6 +160,8 @@ func (icon *LoginIcon) Configure(s string) {
 			icon.Text = "Github"
 		case "discord":
 			icon.Text = "Discord"
+		case "patreon":
+			icon.Text = "Patreon"
 		case "windows":
 			icon.Text = "Microsoft"
 		case "azure":
@@ -194,6 +200,8 @@ func (icon *LoginIcon) Configure(s string) {
 			icon.BackgroundColor = "#fb8c00"
 		case "discord":
 			icon.BackgroundColor = "#5865f2"
+		case "patreon":
+			icon.BackgroundColor = "#ff424d"
 		case "azure":
 			// MaterializeCSS "blue"
 			icon.BackgroundColor = "#03a9f4"

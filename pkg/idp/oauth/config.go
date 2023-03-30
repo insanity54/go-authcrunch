@@ -160,6 +160,8 @@ func (cfg *Config) Validate() error {
 			cfg.Scopes = []string{"openid", "email", "profile"}
 		case "discord":
 			cfg.Scopes = []string{"identify"}
+		case "patreon":
+			cfg.Scopes = []string{"identity", "identity.memberships"}
 		default:
 			cfg.Scopes = []string{"openid", "email", "profile"}
 		}
@@ -174,6 +176,7 @@ func (cfg *Config) Validate() error {
 			fmt.Errorf("identity token name %q is unsupported", cfg.IdentityTokenName),
 		)
 	}
+
 
 	switch cfg.Driver {
 	case "okta":
@@ -249,6 +252,11 @@ func (cfg *Config) Validate() error {
 		cfg.AuthorizationURL = "https://discord.com/oauth2/authorize"
 		cfg.TokenURL = "https://discord.com/api/oauth2/token"
 		cfg.RequiredTokenFields = []string{"access_token"}
+	case "patreon":
+		cfg.BaseAuthURL = "https://www.patreon.com/oauth2"
+		cfg.AuthorizationURL = "https://www.patreon.com/oauth2/authorize"
+		cfg.TokenURL = "https://www.patreon.com/api/oauth2/token"
+		cfg.RequiredTokenFields = []string{"access_token"}
 	case "generic":
 	case "":
 		return errors.ErrIdentityProviderConfig.WithArgs("driver name not found")
@@ -274,6 +282,7 @@ func (cfg *Config) Validate() error {
 	case "facebook":
 	case "nextcloud":
 	case "discord":
+	case "patreon":
 	default:
 		if len(cfg.JwksKeys) > 0 && cfg.AuthorizationURL != "" && cfg.TokenURL != "" {
 			for kid, fp := range cfg.JwksKeys {

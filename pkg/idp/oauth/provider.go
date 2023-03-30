@@ -211,6 +211,10 @@ func (b *IdentityProvider) Configure() error {
 		b.disableKeyVerification = true
 		b.disableNonce = true
 		b.enableAcceptHeader = true
+	case "patreon":
+		b.disableKeyVerification = true
+		b.enableAcceptHeader = true
+		b.disableNonce = true
 	case "nextcloud":
 		b.disableKeyVerification = true
 	}

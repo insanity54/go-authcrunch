@@ -129,6 +129,8 @@ func (b *IdentityProvider) fetchClaims(tokenData map[string]interface{}) (map[st
 		userURL = "https://graph.facebook.com/me"
 	case "discord":
 		userURL = "https://discord.com/api/v10/users/@me"
+	case "patreon":
+		userURL = "https://www.patreon.com/api/oauth2/v2/identity"
 	}
 
 	// Setup http request for the URL.
@@ -138,6 +140,18 @@ func (b *IdentityProvider) fetchClaims(tokenData map[string]interface{}) (map[st
 		if err != nil {
 			return nil, err
 		}
+	case "patreon":
+		params := url.Values{}
+		params.Set("include", "memberships,memberships.currently_entitled_tiers,memberships.currently_entitled_tiers.benefits,memberships.campaign")
+		params.Set("fields[user]", "about,image_url,url,vanity")
+		params.Set("fields[member]", "full_name,is_follower,patron_status,currently_entitled_amount_cents,campaign_lifetime_support_cents")
+		params.Set("fields[tier]", "title")
+		params.Set("fields[benefit]", "title")
+		req, err = http.NewRequest("GET", userURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.URL.RawQuery = params.Encode()
 	case "facebook":
 		h := hmac.New(sha256.New, []byte(b.config.ClientSecret))
 		h.Write([]byte(tokenString))
@@ -161,7 +175,7 @@ func (b *IdentityProvider) fetchClaims(tokenData map[string]interface{}) (map[st
 	switch b.config.Driver {
 	case "github":
 		req.Header.Add("Authorization", "token "+tokenString)
-	case "gitlab", "discord":
+	case "gitlab", "discord", "patreon":
 		req.Header.Add("Authorization", "Bearer "+tokenString)
 	}
 
@@ -203,6 +217,10 @@ func (b *IdentityProvider) fetchClaims(tokenData map[string]interface{}) (map[st
 	case "discord":
 		if _,exists := data["id"]; !exists {
 			return nil, fmt.Errorf("failed obtaining user profile with OAuth 2.0 access token, id field not found")
+		}
+	case "patreon":
+		if _, exists := data["data"].(map[string]interface{})["id"]; !exists {
+		  return nil, fmt.Errorf("failed obtaining user profile with OAuth 2.0 access token, id field not found in patreon data")
 		}
 	case "facebook":
 		if _, exists := data["error"]; exists {
@@ -350,6 +368,41 @@ func (b *IdentityProvider) fetchClaims(tokenData map[string]interface{}) (map[st
 			} else {
 				userGroups = append(userGroups, userData.Groups...)
 			}
+		}
+		b.logger.Debug(
+			"Extracted UserInfo endpoint data",
+			zap.String("identity_provider_name", b.config.Name),
+			zap.Any("inputted", data),
+			zap.Any("extracted", m),
+		)
+	case "patreon":
+		patreonData := data["data"].(map[string]interface{})
+		if _, exists := patreonData["email"]; exists {
+			m["email"] = patreonData["email"]
+		}
+		m["sub"] = "patreon.com/user/" + patreonData["id"].(string)
+		m["id"] = patreonData["id"].(string)
+		// populate the groups
+
+		includes := data["included"].([]interface{})
+		for _, inc := range includes {
+	    item := inc.(map[string]interface{})
+	    attributes := item["attributes"].(map[string]interface{})
+	    itemId := item["id"].(string)
+	    switch item["type"] {
+    	case "member":
+	    	relationships := item["relationships"].(map[string]interface{})
+	    	campaign := relationships["campaign"].(map[string]interface{})
+	    	campaignData := campaign["data"].(map[string]interface{})
+	    	campaignId := campaignData["id"].(string)
+		    if attributes["patron_status"] == "active_patron" {
+		    	userGroups = append(userGroups, fmt.Sprintf("patreon.com/campaign/%s", campaignId))
+		    }
+    	case "benefit":
+    		userGroups = append(userGroups, fmt.Sprintf("patreon.com/benefit/%s", itemId))
+    	case "tier":
+    		userGroups = append(userGroups, fmt.Sprintf("patreon.com/tier/%s", itemId))
+	    }
 		}
 		b.logger.Debug(
 			"Extracted UserInfo endpoint data",
